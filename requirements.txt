@@ -1,0 +1,19 @@
+fastapi
+pylint
+uvicorn[standard]
+pydantic
+sqlalchemy
+passlib
+bcrypt==4.0.1
+python-multipart
+python-jose[cryptography]
+PyMySQL
+# graphene
+# starlette-graphene3
+strawberry-graphql[debug-server]
+aiomysql 
+sqlalchemy[asyncio]
+# mysql-connector-python
+# graphene-sqlalchemy
+typesense
+black

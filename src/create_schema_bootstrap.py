@@ -42,6 +42,104 @@ schema = {
   'default_sorting_field': 'store_unit',
   'token_separators': ["+", "-", "@", ".", " ", "(", ")", "-"]
 }
+ml_inventory_own_emb_schema = {
+  'name': 'inv-ml-owmn-embd',
+  'fields': [
+    {
+      'name'  :  'inventory_id',
+      'type'  :  'int32'
+    },
+    {
+      'name'  :  'store_unit',
+      'type'  :  'int32',
+       'facet' :  True,
+       'sort': True
+    },
+    {
+      'name'  :  'rating',
+      'type'  :  'float',
+       'facet' :  True,
+       'sort': True,
+       'range_index': True,
+       'optional': True
+    },
+    {
+      'name'  :  'item_number',
+      'type'  :  'int32',
+      'facet' :  True
+    },
+    {
+      'name'  :  'item_number_str',
+      'type'  :  'string',
+      'weight': 2
+    },
+    {
+      'name'  :  'item_desc',
+      'type'  :  'string',
+      'weight': 1
+    },
+    {
+            "name": "embedding",
+            "type": "float[]",
+            "num_dim": 384
+    }
+  ],
+  'default_sorting_field': 'store_unit',
+  'token_separators': ["+", "-", "@", ".", " ", "(", ")", "-"]
+}
+
+ml_inventory_schema = {
+  'name': 'inv-ml',
+  'fields': [
+    {
+      'name'  :  'inventory_id',
+      'type'  :  'int32'
+    },
+    {
+      'name'  :  'store_unit',
+      'type'  :  'int32',
+       'facet' :  True,
+       'sort': True
+    },
+    {
+      'name'  :  'rating',
+      'type'  :  'float',
+       'facet' :  True,
+       'sort': True,
+       'range_index': True,
+       'optional': True
+    },
+    {
+      'name'  :  'item_number',
+      'type'  :  'int32',
+      'facet' :  True
+    },
+    {
+      'name'  :  'item_number_str',
+      'type'  :  'string',
+      'weight': 2
+    },
+    {
+      'name'  :  'item_desc',
+      'type'  :  'string',
+      'weight': 1
+    },
+    {
+            "name": "embedding",
+            "type": "float[]",
+            "embed": {
+              "from": [
+                "item_desc"
+              ],
+              "model_config": {
+                "model_name": "ts/all-MiniLM-L12-v2"
+              }
+            }
+    }
+  ],
+  'default_sorting_field': 'store_unit',
+  'token_separators': ["+", "-", "@", ".", " ", "(", ")", "-"]
+}
 
 
 popular_word_schema = {
@@ -88,11 +186,19 @@ def get_document_by_id(collection_name:str, id: str):
 def search_documents(collection_name: str, search_parameters: dict):
     return client.collections[collection_name].documents.search(search_parameters)
 
+def bootstrap_generic(collection_name:str = 'inv-ml-owmn-embd', schema=ml_inventory_own_emb_schema, 
+                                          data_path="inventory_ml_own_embd_to_load.jsonl"):
+    try:
+        resp = delete_a_collection(collection_name=collection_name)
+    except:
+        pass
+    creat_collection(schema=ml_inventory_own_emb_schema)
+    load_data_generic(collection_name, data_path)
 
 def load_inv_data():
     # Loading data
     j_records = []
-    with open(r"inventory_to_load.jsonl", "r") as f:
+    with open("inventory_to_load.jsonl", "r") as f:
         for each in f:
             if each.strip():
                 data = json.loads(each.rstrip())
@@ -109,7 +215,7 @@ def load_inv_data():
 
 
 def load_data_generic(collection_name: str, 
-                      file_path: str = r"english_words.jsonl"):
+                      file_path: str = "english_words.jsonl"):
     # Loading data
     j_records = []
     with open(file_path, "r") as f:
@@ -149,5 +255,11 @@ if __name__ == '__main__':
 
     bootstrap_inventory_data()
     bootstrap_english()
+
+    # this is to create your own embeddings
+    bootstrap_generic("inv-ml-owmn-embd", ml_inventory_own_emb_schema, "inventory_ml_own_embd_to_load.jsonl")
+
+    # this schmea includes the model details and typesense will create the embeddings.
+    bootstrap_generic("inv-ml", ml_inventory_schema, "inventory_ml_to_load.jsonl")
 
    

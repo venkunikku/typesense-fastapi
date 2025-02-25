@@ -51,3 +51,9 @@ class SearchParameters(BaseModel):
             ]
         }
     }
+
+class SearchParametersWithCollection(SearchParameters):
+    collection: str = Field(..., description="Collection name (Required for /multi_search)")
+
+class MultiSearch(BaseModel):
+    searches: list[SearchParametersWithCollection]
